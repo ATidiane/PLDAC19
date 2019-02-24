@@ -21,42 +21,51 @@ sys.path.insert(0, '../src/')
 
 def discretise_validations(stations, dates, times):
 
+    def count(cursor, station, date, start, end):
+        query = ("SELECT count(*) FROM validation "
+                 "WHERE station_id = {} AND operation_date = \"{}\" "
+                 "AND time between \"{}\" AND \"{}\"".format(
+                     station, date, start, end))
+
+        cursor.execute(query)
+        return cursor.fetchall()[0][0]
+
+    def count_last(cursor, station, date, start):
+        query = ("SELECT count(*) FROM validation "
+                 "WHERE station_id = {} AND operation_date = \"{}\" "
+                 "AND time >= \"{}\"".format(station, date, start))
+
+        cursor.execute(query)
+        return cursor.fetchall()[0][0]
+
     connection = Connection()
     cursor = connection.cursor()
 
-    def count(cursor, station, date, start, end):
-        query = ("SELECT count(*) FROM validations "
-                 "WHERE station_id = {} AND operation_date = {} "
-                 "AND time between {} AND {}".format(
-                     station, date, start, end))
-
-        cursor.excecute(query)
-        return cursor.fetchall()
-
-    def count_last(cursor, station, date, start):
-        query = ("SELECT count(*) FROM validations "
-                 "WHERE station_id = {} AND operation_date = {} "
-                 "AND time >= {}".format(station, date, start))
-
-        cursor.excecute(query)
-        return cursor.fetchall()
-
+    print("Creating Dataset...")
     matrix = []
     for i, date in enumerate(dates):
+        print("    ", i, date)
         matrix.append([])
-        for j, station in enumerate(metro_stations):
+        for j, station_id in enumerate(stations):
+            print("        ", j, station_id)
             matrix[i].append([])
             for k, temps in enumerate(times):
-                if k == len(times):
+                if k == len(times) - 1:
                     matrix[i][j].append(
                         count_last(
                             cursor,
-                            station,
+                            station_id,
                             date,
                             temps))
                 else:
                     matrix[i][j].append(
-                        count(cursor, station, date, temps, times[k + 1]))
+                        count(cursor, station_id, date, temps, times[k + 1]))
+
+        print("Saving {}.npy".format(date))
+        np.save("../datasets/{}".format(date), np.array(matrix[i]))
+
+    np.save("../datasets/all_matrix", np.array(matrix))
+    print("Done...")
 
 
 if __name__ == "__main__":
@@ -64,12 +73,11 @@ if __name__ == "__main__":
 
     metro_stations = [k for k, v in stations_mode.items() if v == 3]
 
-    dates = pd.date_range(start="2015-10-01", end="2015-10-01").date
-
-    for d in dates:
-        print(d)
+    dates = pd.date_range(start="2015-10-01", end="2015-12-31").date
 
     times = pd.date_range(
         start="2015-10-01",
         end="2015-10-01 23:59:59",
         freq="15min").time
+
+    discretise_validations(metro_stations, dates, times)
