@@ -111,6 +111,22 @@ def read_file_pd_ext(filename, **params):
         print("Extension not supported by pandas")
 
 
+def generate_times(freq, debut="2015-10-01", fin="2015-10-01"):
+    """FIXME! briefly describe function
+
+    :param frep:
+    :returns:
+    :rtype:
+
+    """
+    times = pd.date_range(
+        start=debut,
+        end=fin + " 23:59:59",
+        freq=freq).time
+
+    return times
+
+
 """____________________________________Main_________________________________"""
 """_________________________________________________________________________"""
 
