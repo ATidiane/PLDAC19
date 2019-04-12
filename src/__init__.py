@@ -10,8 +10,6 @@ from utils import remove_anomalies, sep_days, sep_month, sep_wde
 """_________________________________Constants_______________________________"""
 """_________________________________________________________________________"""
 
-# data_repo = '/local/balde/datasets/stiflearning/'
-# dep_to_keep = ['75', '77', '78', '91', '92', '93', '94', '95']
 
 dates = pd.date_range(start="2015-10-01", end="2015-12-31").date
 

@@ -10,34 +10,8 @@ Author: Ahmed Tidiane BALDE
 import io
 import pickle
 
+import numpy as np
 import pandas as pd
-
-
-def load_pkl(filename):
-    """ Read pkl file
-
-    :param filename: file name
-    :returns: a dictionary
-    :rtype: dict
-
-    """
-
-    with open(filename, 'rb') as f:
-        return pickle.load(f)
-
-
-def save_in_pkl(obj, filename):
-    """ Save pkl file
-
-    :param obj: object to save, usually a dictionary
-    :param filename: file to save the object in
-    :returns: None
-    :rtype: Void
-
-    """
-
-    with open(filename, 'wb') as f:
-        pickle.dump(obj, f, 2)
 
 
 def load_pkl(filename):
@@ -191,10 +165,13 @@ def remove_anomalies(dico, anomalies):
                        zip(dico, dico.values())))
 
 
-def create_panel_pred(ar_preds, t, order, del_hours=0):
+def create_panel_pred(ar_preds, X_test, t, order,
+                      subway_stations, del_hours=0):
     """
 
     """
+
+    wd_testorder_15m = X_test.iloc[:, :, order:]
 
     return pd.Panel(np.array(ar_preds[t - 1]),
                     items=wd_testorder_15m.items,
