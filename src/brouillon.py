@@ -1,3 +1,11 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+
+"""
+
+Author: Ahmed Tidiane BALDE
+"""
+
 import numpy as np
 
 from cost_functions import mse, mse_g
@@ -38,8 +46,8 @@ class Regressor:
                     X = np.vstack((
                         X,
                         datax.iloc[:, t:t + self.order].values.reshape(-1, self.order)))
-                    y = np.vstack((y,
-                                   datax.iloc[:, t + self.order].values.reshape(-1, 1)))
+                    y = np.vstack(
+                        (y, datax.iloc[:, t + self.order].values.reshape(-1, 1)))
 
                 return fonc(self, (X, y), *args, **kwargs)
             elif datax.ndim == 1:
@@ -154,8 +162,14 @@ class Baseline:
 
 
 class myAR(Regressor):
-    def __init__(self, order=4, level=None, loss=mse, loss_g=mse_g, max_iter=1000,
-                 eps=0.01):
+    def __init__(
+            self,
+            order=4,
+            level=None,
+            loss=mse,
+            loss_g=mse_g,
+            max_iter=1000,
+            eps=0.01):
         """ Initialisation des paramètres du perceptron
 
         :param order: Taille de la fenêtre glissante

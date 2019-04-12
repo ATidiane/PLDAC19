@@ -42,6 +42,10 @@ def merge_pkls(stations, dates, path):
     return matrix
 
 
+"""____________________________________Main_________________________________"""
+"""_________________________________________________________________________"""
+
+
 def main():
     # Variables declarations
     stations_mode = load_pkl("../datasets/stations_mode.pkl")

@@ -127,6 +127,81 @@ def generate_times(freq, debut="2015-10-01", fin="2015-10-01"):
     return times
 
 
+def sep_days(dico, diff_days=7):
+    """
+
+    :param dico:
+    :param diff_days:
+    :return:
+    :rtype:
+
+    """
+
+    return {d: dict(filter(lambda dd: dd[1].weekday() == d,
+                           zip(dico, dico.values())))
+            for d in range(diff_days)}
+
+
+def sep_wde(dico, week="days"):
+    """
+
+    :param dico:
+    :param week:
+    :return:
+    :rtype:
+
+    """
+
+    if week.lower() == "days":
+        return dict(filter(lambda dd: dd[1].weekday() < 5,
+                           zip(dico, dico.values())))
+    elif week.lower() == "end":
+        return dict(filter(lambda dd: dd[1].weekday() >= 5,
+                           zip(dico, dico.values())))
+    else:
+        raise ValueError("Wrong value for parameter \"week\"\n \
+        Only takes two differents values : \"days\" or \"end\"")
+
+
+def sep_month(dico, month_num=10):
+    """
+
+    :param dico:
+    :param month_num:
+    :return:
+    :rtype:
+
+    """
+
+    return dict(filter(lambda dd: dd[1].month == month_num,
+                       zip(dico, dico.values())))
+
+
+def remove_anomalies(dico, anomalies):
+    """
+
+    :param dico:
+    :param anomalies:
+    :return:
+    :rtype:
+
+    """
+
+    return dict(filter(lambda dd: dd[1] not in anomalies,
+                       zip(dico, dico.values())))
+
+
+def create_panel_pred(ar_preds, t, order, del_hours=0):
+    """
+
+    """
+
+    return pd.Panel(np.array(ar_preds[t - 1]),
+                    items=wd_testorder_15m.items,
+                    major_axis=subway_stations,
+                    minor_axis=generate_times("15min")[(del_hours * 4) + order:])
+
+
 """____________________________________Main_________________________________"""
 """_________________________________________________________________________"""
 
