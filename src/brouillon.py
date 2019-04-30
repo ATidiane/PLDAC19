@@ -303,7 +303,7 @@ class myAR(Regressor):
                         next_y = 0
                     y_pred.append(next_y)
                     batchx = np.hstack((batchx[1:], next_y))
-                    replace_ind = replace_static_index + t + 1
+                    replace_ind = batch_ind + t + 1
                     batch_ind = self.order - tplus
                     batchx[batch_ind] = datax.iloc[replace_ind]
 
