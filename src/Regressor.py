@@ -56,6 +56,50 @@ class Regressor:
 
         return reshape_data
 
+    def datax_t_decorator(fonc):
+        def reshape_data(self, datax, tplus, *args, **kwargs):
+            """ Reshape data into one single matrix in order to apply analytic
+            solution.
+
+            :param datax: contient tous les exemples du dataset
+            :returns: void
+            :rtype: None
+
+            """
+
+            if datax.ndim == 3:
+                X = datax.iloc[:, :,
+                               0:self.order].values.reshape(-1, self.order)
+                y = datax.iloc[:, :, self.order +
+                               tplus - 1].values.T.reshape(-1, 1)
+                for t in range(1, datax.shape[2] - self.order - tplus + 1):
+                    X = np.vstack((
+                        X,
+                        datax.iloc[:, :, t:t + self.order].values.reshape(-1, self.order)))
+                    y = np.vstack((
+                        y,
+                        datax.iloc[:, :, t + self.order + tplus - 1].values.T.reshape(-1, 1)))
+
+                return fonc(self, (datax, X, y), tplus, *args, **kwargs)
+            elif datax.ndim == 2:
+                X = datax.iloc[:, 0:self.order].values.reshape(-1, self.order)
+                y = datax.iloc[:, self.order + tplus - 1].values.reshape(-1, 1)
+                for t in range(1, datax.shape[1] - self.order - tplus + 1):
+                    X = np.vstack((
+                        X,
+                        datax.iloc[:, t:t + self.order].values.reshape(-1, self.order)))
+                    y = np.vstack(
+                        (y, datax.iloc[:, t + self.order + tplus - 1].values.reshape(-1, 1)))
+
+                return fonc(self, (datax, X, y), tplus, *args, **kwargs)
+            elif datax.ndim == 1:
+                # TODO
+                pass
+            else:
+                raise ValueError("Untreated datax number of dimensions")
+
+        return reshape_data
+
     def fit(self):
         raise NotImplementedError("Please Implement this method")
 
