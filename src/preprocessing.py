@@ -15,6 +15,9 @@ import numpy as np
 import pandas as pd
 from pyproj import Proj, transform
 
+from constant import data_matrix_15m_complete, dict_w, subway_stations
+from utils import generate_times, sep_days
+
 """_____________________________Generic Functions___________________________"""
 """_________________________________________________________________________"""
 
@@ -237,12 +240,157 @@ def missing_ratio(data):
     return missing_data
 
 
-"""____________________________________Main_________________________________"""
+def normalize_to_panel(X, X_min_max, station_id, a=0, b=1):
+    """
+
+    :param X:
+    :param X_min_max:
+    :param station_id:
+    :param a:
+    :param b:
+
+    """
+    mini, maxi = X_min_max.loc[station_id]
+    return (a + ((X.loc[:, station_id] - mini)
+                 * (b - a)) / (maxi - mini)).values
+
+
+def denormalize_to_panel(X, X_min_max, station_id, a=0, b=1):
+    """
+
+    :param X:
+    :param X_min_max:
+    :param station_id:
+    :param a:
+    :param b:
+
+    """
+    mini, maxi = X_min_max.loc[station_id]
+    return (((X.loc[:, station_id] - a) * (maxi - mini)) /
+            (b - a) + mini).values
+
+
+def normalize_panel_data(X_train, X_test, del_hours=4, a=-1, b=1):
+    """FIXME! briefly describe function
+
+    :param X_train:
+    :param X_test:
+    :param a:
+    :param b:
+    :returns:
+    :rtype:
+
+    """
+    # Normalization between a and b
+    X_min_max = X_train.apply(
+        lambda x: (
+            x.min().min(), x.max().max()), axis=(
+            0, 2))
+
+    Xn_train = X_train.apply(lambda x: a + ((x - x.min().min()) * (b - a)) / (
+        x.max().max() - x.min().min()), axis=(0, 2)).transpose(2, 0, 1)
+
+    # Normalize X_test
+    Xn_test = pd.Panel(np.array(list(map(lambda station_id: normalize_to_panel(X_test,
+                                                                               X_min_max,
+                                                                               station_id, a=a, b=b),
+                                         X_test.transpose(1, 0, 2)))).transpose(2, 0, 1),
+                       items=list(X_test.items),
+                       major_axis=subway_stations,
+                       minor_axis=generate_times("15min")[(del_hours * 4):])
+
+    return Xn_train, Xn_test, X_min_max
+
+
+def del_split_norm(
+        dico,
+        test_size,
+        diff_days,
+        del_hours=4,
+        stations_to_del=[
+            4113,
+            20868],
+        a=-1,
+        b=1):
+    """FIXME! briefly describe function
+
+    :param dico:
+    :param size:
+    :param diff_days:
+    :param del_hours:
+    :param stations_to_del:
+    :param 20868]:
+    :param a:
+    :param b:
+    :returns:
+    :rtype:
+
+    """
+
+    data_matrix_15m = data_matrix_15m_complete.iloc[:, :, del_hours * 4:]
+    X = data_matrix_15m.loc[dico.values()]
+    X.drop(columns=stations_to_del, inplace=True)
+
+    try:
+        for s in stations_to_del:
+            subway_stations.remove(s)
+    except BaseException:
+        pass
+
+    # Split
+    ddico = sep_days(dico, diff_days)
+    for i in range(len(ddico)):
+        ddico[i] = list(ddico[i].values())
+
+    i_test = []
+
+    if test_size <= diff_days:
+        for i in range(test_size):
+            chosen_ind = np.random.choice(ddico[i])
+            i_test.append(chosen_ind)
+            print(ddico[i], "\n")
+            ddico[i].remove(chosen_ind)
+            print(ddico[i])
+    else:
+        r = test_size % diff_days
+        d = test_size // diff_days
+        for i in range(diff_days):
+            chosen_inds = np.random.choice(ddico[i], d, replace=False)
+            i_test.extend(chosen_inds)
+            for e in chosen_inds:
+                ddico[i].remove(e)
+
+        for i in np.random.choice(diff_days, r, replace=False):
+            chosen_ind = np.random.choice(ddico[i])
+            i_test.append(chosen_ind)
+            ddico[i].remove(chosen_ind)
+
+    # Flatten the dictionnary
+    i_train = [j for i in ddico for j in ddico[i]]
+
+    X_train = X[sorted(i_train)]
+    X_test = X[sorted(i_test)]
+
+    # Normalization
+    Xn_train, Xn_test, X_min_max = normalize_panel_data(
+        X_train, X_test, del_hours=del_hours, a=a, b=b)
+
+    return X_train, X_test, Xn_train, Xn_test, X_min_max
+
+
+""" ____________________________________Main_________________________________"""
 """_________________________________________________________________________"""
 
 
 def main():
-    pass
+    X_train, X_test, Xn_train, Xn_test, X_min_max = del_split_norm(
+        dict_w, test_size=14, diff_days=7)
+
+    print(X_train.items, "\n")
+    print(Xn_train.items, "\n")
+
+    print(X_test.items, "\n")
+    print(Xn_test.items)
 
 
 if __name__ == "__main__":

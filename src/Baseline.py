@@ -8,7 +8,7 @@ Author: Ahmed Tidiane BALDE
 
 import numpy as np
 
-from __init__ import ddict_days
+from constant import ddict_days
 
 
 class Baseline:
