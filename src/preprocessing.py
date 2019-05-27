@@ -15,7 +15,8 @@ import numpy as np
 import pandas as pd
 from pyproj import Proj, transform
 
-from constant import data_matrix_15m_complete, dict_w, subway_stations
+from constant import (data_matrix_15m_complete, ddict_days, dict_w,
+                      subway_stations)
 from utils import generate_times, sep_days
 
 """_____________________________Generic Functions___________________________"""
@@ -291,15 +292,63 @@ def normalize_panel_data(X_train, X_test, del_hours=4, a=-1, b=1):
         x.max().max() - x.min().min()), axis=(0, 2)).transpose(2, 0, 1)
 
     # Normalize X_test
-    Xn_test = pd.Panel(np.array(list(map(lambda station_id: normalize_to_panel(X_test,
-                                                                               X_min_max,
-                                                                               station_id, a=a, b=b),
-                                         X_test.transpose(1, 0, 2)))).transpose(2, 0, 1),
-                       items=list(X_test.items),
-                       major_axis=subway_stations,
-                       minor_axis=generate_times("15min")[(del_hours * 4):])
+    Xn_test = pd.Panel(np.array(list(map(
+        lambda station_id: normalize_to_panel(X_test,
+                                              X_min_max,
+                                              station_id,
+                                              a=a, b=b),
+        X_test.transpose(1, 0, 2)))).transpose(2, 0, 1),
+        items=list(X_test.items),
+        major_axis=list(X_test.major_axis),
+        minor_axis=generate_times("15min")[(del_hours * 4):])
 
     return Xn_train, Xn_test, X_min_max
+
+
+def denormalize_panel_data(X, X_min_max, del_hours=4, a=-1, b=1):
+    """FIXME! briefly describe function
+
+    :param X:
+    :param X_min_max:
+    :param del_hours:
+    :param a:
+    :param b:
+    :returns:
+    :rtype:
+
+    """
+
+    # Denormalize X_test
+    Xdn = pd.Panel(np.array(list(map(
+        lambda station_id: denormalize_to_panel(X,
+                                                X_min_max,
+                                                station_id,
+                                                a=a, b=b),
+        X.transpose(1, 0, 2)))).transpose(2, 0, 1),
+        items=list(X.items),
+        major_axis=list(X.major_axis),
+        minor_axis=generate_times("15min")[(del_hours * 4):])
+
+    return Xdn
+
+
+def denormalize_T(T, X_min_max, del_hours=4, a=-1, b=1):
+    """FIXME! briefly describe function
+
+    :param T:
+    :param X_min_max:
+    :param del_hours:
+    :param a:
+    :param b:
+    :returns:
+    :rtype:
+
+    """
+    dT = []
+    for X in T:
+        dT.append(denormalize_panel_data(X, X_min_max, del_hours, a, b))
+
+    return dT
 
 
 def del_split_norm(
@@ -376,6 +425,80 @@ def del_split_norm(
         X_train, X_test, del_hours=del_hours, a=a, b=b)
 
     return X_train, X_test, Xn_train, Xn_test, X_min_max
+
+
+def sub_bsline_s(X, baseline):
+    """FIXME! briefly describe function
+
+    :param X:
+    :param baseline:
+    :returns:
+    :rtype:
+
+    """
+
+    return X.apply(lambda x: x - baseline.iloc[0], axis=(1, 2))
+
+
+def add_bsline_s(X, baseline):
+    """FIXME! briefly describe function
+
+    :param X:
+    :param baseline:
+    :returns:
+    :rtype:
+
+    """
+
+    return X.apply(lambda x: x + baseline.iloc[0], axis=(1, 2))
+
+
+def sub_bsline_sj(X_train, X):
+    """FIXME! briefly describe function
+
+    :param X_train:
+    :param X:
+    :returns:
+    :rtype:
+
+    """
+
+    X_copy = X.copy()
+    for d in range(7):
+        exist_ind_train = list(
+            set(ddict_days[d].values()) & set(X_train.items))
+        exist_ind = list(
+            set(ddict_days[d].values()) & set(X_copy.items))
+        bsline_sj = X_train[exist_ind_train].mean(axis=0)
+        if exist_ind:
+            X_copy.update(X_copy[exist_ind].apply(
+                lambda x: x - bsline_sj, axis=(1, 2)))
+
+    return X_copy
+
+
+def add_bsline_sj(X_train, X):
+    """FIXME! briefly describe function
+
+    :param X_train:
+    :param X:
+    :returns:
+    :rtype:
+
+    """
+
+    X_copy = X.copy()
+    for d in range(7):
+        exist_ind_train = list(
+            set(ddict_days[d].values()) & set(X_train.items))
+        exist_ind = list(
+            set(ddict_days[d].values()) & set(X_copy.items))
+        bsline_sj = X_train[exist_ind_train].mean(axis=0)
+        if exist_ind:
+            X_copy.update(X_copy[exist_ind].apply(
+                lambda x: x + bsline_sj, axis=(1, 2)))
+
+    return X_copy
 
 
 """ ____________________________________Main_________________________________"""

@@ -46,7 +46,12 @@ class AR(Regressor):
                 _, tmp = self.decorate_X(self.T[i])
                 self.X_test[:, -j] = tmp[:, -j]
 
-            yp = datax.iloc[:, :, :self.p].values.reshape(-1, 1)
+            yp = datax.iloc[:, :, 0].values.T.reshape(-1, 1)
+            for t in range(1, self.p):
+                yp = np.vstack((
+                    yp,
+                    datax.iloc[:, :, t].values.T.reshape(-1, 1)))
+
             y_pred = self.model.predict(self.X_test)
 
             pred_matrix = self.reshaped(
