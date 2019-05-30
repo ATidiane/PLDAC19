@@ -10,10 +10,10 @@ import numpy as np
 
 
 class Regressor:
-    def __init__(self):
-        raise NotImplementedError("Please Implement this method")
+    def __init__(self, p):
+        self.p = p
 
-    def datax_decorator(fonc):
+    def X_y_decorator(fonc):
         def reshape_data(self, datax, *args, **kwargs):
             """ Reshape data into one single matrix in order to apply analytic
             solution.
@@ -26,28 +26,67 @@ class Regressor:
 
             if datax.ndim == 3:
                 X = datax.iloc[:, :,
-                               0:self.order].values.reshape(-1, self.order)
-                y = datax.iloc[:, :, self.order].values.T.reshape(-1, 1)
-                for t in range(1, datax.shape[2] - self.order):
+                               0:self.p].values.reshape(-1, self.p)
+                y = datax.iloc[:, :, self.p].values.T.reshape(-1, 1)
+                for t in range(1, datax.shape[2] - self.p):
                     X = np.vstack((
                         X,
-                        datax.iloc[:, :, t:t + self.order].values.reshape(-1, self.order)))
+                        datax.iloc[:, :, t:t + self.p].values.reshape(-1, self.p)))
                     y = np.vstack((
                         y,
-                        datax.iloc[:, :, t + self.order].values.T.reshape(-1, 1)))
+                        datax.iloc[:, :, t + self.p].values.T.reshape(-1, 1)))
 
                 return fonc(self, (datax, X, y), *args, **kwargs)
             elif datax.ndim == 2:
-                X = datax.iloc[:, 0:self.order].values.reshape(-1, self.order)
-                y = datax.iloc[:, self.order].values.reshape(-1, 1)
-                for t in range(1, datax.shape[1] - self.order):
+                X = datax.iloc[:, 0:self.p].values.reshape(-1, self.p)
+                y = datax.iloc[:, self.p].values.reshape(-1, 1)
+                for t in range(1, datax.shape[1] - self.p):
                     X = np.vstack((
                         X,
-                        datax.iloc[:, t:t + self.order].values.reshape(-1, self.order)))
+                        datax.iloc[:, t:t + self.p].values.reshape(-1, self.p)))
                     y = np.vstack(
-                        (y, datax.iloc[:, t + self.order].values.reshape(-1, 1)))
+                        (y, datax.iloc[:, t + self.p].values.reshape(-1, 1)))
 
                 return fonc(self, (datax, X, y), *args, **kwargs)
+            elif datax.ndim == 1:
+                # TODO
+                pass
+            else:
+                raise ValueError("Untreated datax number of dimensions")
+
+        return reshape_data
+
+    def X_decorator(fonc):
+        def reshape_data(self, datax, *args, **kwargs):
+            """ Reshape data into one single matrix in order to apply analytic
+            solution.
+
+            :param datax: contient tous les exemples du dataset
+            :returns: void
+            :rtype: None
+
+            """
+
+            if datax.ndim == 3:
+                X = datax.iloc[:, :,
+                               0:self.p].values.reshape(-1, self.p)
+                for t in range(1, datax.shape[2] - self.p):
+                    X = np.vstack((
+                        X,
+                        datax.iloc[:, :, t:t + self.p].values.reshape(-1, self.p)))
+
+                return fonc(self, (datax, X), *args, **kwargs)
+
+            elif datax.ndim == 2:
+                X = datax.iloc[:, 0:self.p].values.reshape(-1, self.p)
+
+                for t in range(1, datax.shape[1] - self.p):
+                    X = np.vstack((
+                        X,
+                        datax.iloc[:, t:t + self.p].values.reshape(-1, self.p)))
+
+                return fonc(self, (datax, X), *args, **kwargs)
+
             elif datax.ndim == 1:
                 # TODO
                 pass
@@ -69,27 +108,27 @@ class Regressor:
 
             if datax.ndim == 3:
                 X = datax.iloc[:, :,
-                               0:self.order].values.reshape(-1, self.order)
-                y = datax.iloc[:, :, self.order +
+                               0:self.p].values.reshape(-1, self.p)
+                y = datax.iloc[:, :, self.p +
                                tplus - 1].values.T.reshape(-1, 1)
-                for t in range(1, datax.shape[2] - self.order - tplus + 1):
+                for t in range(1, datax.shape[2] - self.p - tplus + 1):
                     X = np.vstack((
                         X,
-                        datax.iloc[:, :, t:t + self.order].values.reshape(-1, self.order)))
+                        datax.iloc[:, :, t:t + self.p].values.reshape(-1, self.p)))
                     y = np.vstack((
                         y,
-                        datax.iloc[:, :, t + self.order + tplus - 1].values.T.reshape(-1, 1)))
+                        datax.iloc[:, :, t + self.p + tplus - 1].values.T.reshape(-1, 1)))
 
                 return fonc(self, (datax, X, y), tplus, *args, **kwargs)
             elif datax.ndim == 2:
-                X = datax.iloc[:, 0:self.order].values.reshape(-1, self.order)
-                y = datax.iloc[:, self.order + tplus - 1].values.reshape(-1, 1)
-                for t in range(1, datax.shape[1] - self.order - tplus + 1):
+                X = datax.iloc[:, 0:self.p].values.reshape(-1, self.p)
+                y = datax.iloc[:, self.p + tplus - 1].values.reshape(-1, 1)
+                for t in range(1, datax.shape[1] - self.p - tplus + 1):
                     X = np.vstack((
                         X,
-                        datax.iloc[:, t:t + self.order].values.reshape(-1, self.order)))
+                        datax.iloc[:, t:t + self.p].values.reshape(-1, self.p)))
                     y = np.vstack(
-                        (y, datax.iloc[:, t + self.order + tplus - 1].values.reshape(-1, 1)))
+                        (y, datax.iloc[:, t + self.p + tplus - 1].values.reshape(-1, 1)))
 
                 return fonc(self, (datax, X, y), tplus, *args, **kwargs)
             elif datax.ndim == 1:
@@ -99,6 +138,37 @@ class Regressor:
                 raise ValueError("Untreated datax number of dimensions")
 
         return reshape_data
+
+    def reshaped(self, y_pred, datax, exact=False):
+        """FIXME! briefly describe function
+
+        :param y_pred:
+        :param datax:
+        :returns:
+        :rtype:
+
+        """
+        if datax.ndim == 3:
+            if exact:
+                minor_axis = datax.shape[2]
+            else:
+                minor_axis = datax.shape[2] - self.p
+
+            return y_pred.reshape(
+                (datax.shape[0] *
+                 datax.shape[1],
+                 minor_axis),
+                order='F').reshape(
+                (datax.shape[0],
+                 datax.shape[1],
+                 minor_axis))
+        elif datax.ndim == 2:
+            if exact:
+                minor_axis = datax.shape[1]
+            else:
+                minor_axis = datax.shape[1] - self.p
+            return y_pred.reshape(
+                (datax.shape[0], minor_axis), order='F')
 
     def fit(self):
         raise NotImplementedError("Please Implement this method")

@@ -68,6 +68,29 @@ def mpe(y, y_pred):
     return 100 * np.mean((y - y_pred) / y)
 
 
+def mape_stations(X_test, X_pred, p=4):
+    """FIXME! briefly describe function
+
+    :param X_test:
+    :param X_pred:
+    :param p:
+    :returns:
+    :rtype:
+
+    """
+    mae_mat = np.abs(
+        X_test.iloc[:, :, p:].values - X_pred.iloc[:,
+                                                   :,
+                                                   p:].values) / X_test.iloc[:,
+                                                                             :,
+                                                                             p:].values
+    mae_mat = np.where(mae_mat == np.inf, 0, mae_mat)
+    mae = np.nanmean(mae_mat, axis=(0, 2))
+    mape = 100 * mae
+
+    return mape
+
+
 """____________________________________Main_________________________________"""
 """_________________________________________________________________________"""
 

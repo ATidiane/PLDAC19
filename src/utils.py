@@ -179,6 +179,25 @@ def create_panel_pred(ar_preds, X_test, t, order,
                     minor_axis=generate_times("15min")[(del_hours * 4) + order:])
 
 
+def make_dict_intervals(dict_mape, intervals=[25, 50]):
+    """FIXME! briefly describe function
+
+    :param dict_mape:
+    :param intervals:
+    :param 50]:
+    :returns:
+    :rtype:
+
+    """
+    dless_twf = {k: v for k, v in dict_mape.items() if v <= intervals[0]}
+    dtwf_ffty = {
+        k: v for k,
+        v in dict_mape.items() if intervals[0] < v <= intervals[1]}
+    dmore_ffty = {k: v for k, v in dict_mape.items() if v > intervals[1]}
+
+    return dless_twf, dtwf_ffty, dmore_ffty
+
+
 """____________________________________Main_________________________________"""
 """_________________________________________________________________________"""
 
