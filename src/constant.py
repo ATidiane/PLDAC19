@@ -33,6 +33,10 @@ to_del = nov_del + vacs
 
 # Dates without anomalies
 dict_w = remove_anomalies(dict_dates, to_del)
+dict_w_oct = sep_month(dict_w, 10)
+dict_w_nov = sep_month(dict_w, 11)
+dict_w_dec = sep_month(dict_w, 12)
+
 dict_wd_final = remove_anomalies(dict_wd, to_del)
 
 dict_wd_octf = sep_month(dict_wd_final, 10)

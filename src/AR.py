@@ -52,7 +52,7 @@ class AR(Regressor):
                     yp,
                     datax.iloc[:, :, t].values.T.reshape(-1, 1)))
 
-            y_pred = self.model.predict(self.X_test)
+            y_pred = self.model.predict(self.X_test).reshape(-1, 1)
 
             pred_matrix = self.reshaped(
                 np.vstack((yp, y_pred)), datax, exact=True)

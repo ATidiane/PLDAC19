@@ -16,7 +16,7 @@ from AR import AR
 from constant import ddict_days
 
 
-class AR_sj(AR):
+class AR_j(AR):
     def __init__(self, p, model, nb_days=7):
         """FIXME! briefly describe function
 
@@ -31,10 +31,9 @@ class AR_sj(AR):
         self.p = p
         self.nb_days = nb_days
         self.initial_model = model
-        self.models = [[] for _ in range(7)]
+        self.models = []
         self.T = dict()
-        self.Ts = dict()
-        self.Tjs = {d: dict() for d in range(7)}
+        self.Tj = dict()
 
     @AR.X_y_decorator
     def fit(self, datax):
@@ -51,16 +50,13 @@ class AR_sj(AR):
             exist_ind = list(
                 set(ddict_days[d].values()) & set(initial_datax.items))
 
-            initial_datax[exist_ind].apply(
-                lambda station: self.models[d].append(
-                    clone(self.initial_model).fit(*self.decorate_X_y(
-                        station.T)[1:])),
-                axis=(0, 2))
+            self.models.append(clone(self.initial_model).fit(
+                *self.decorate_X_y(initial_datax[exist_ind])[1:]))
 
-    def predict(self, X_station, X_test, d, s, tplus):
+    def predict(self, X_day, X_test, d, tplus):
         """FIXME! briefly describe function
 
-        :param X_station:
+        :param X_day:
         :param X_test:
         :param d:
         :param s:
@@ -69,31 +65,31 @@ class AR_sj(AR):
         :rtype:
 
         """
-        if len(self.Ts) == tplus - 1:
+        if len(self.Tj) == tplus - 1:
             for i, j in zip(range(1, tplus), reversed(range(1, tplus))):
-                _, tmp = self.decorate_X(self.Ts[i])
+                _, tmp = self.decorate_X(self.Tj[i])
                 X_test[:, -j] = tmp[:, -j]
 
-            yp = X_station.iloc[:, 0].values.reshape(-1, 1)
+            yp = X_day.iloc[:, :, 0].values.T.reshape(-1, 1)
             for t in range(1, self.p):
                 yp = np.vstack((
                     yp,
-                    X_station.iloc[:, t].values.reshape(-1, 1)))
+                    X_day.iloc[:, :, t].values.T.reshape(-1, 1)))
 
-            y_pred = self.models[d][s].predict(X_test)
+            y_pred = self.models[d].predict(X_test).reshape(-1, 1)
 
             pred_matrix = self.reshaped(
-                np.vstack((yp, y_pred)), X_station, exact=True)
+                np.vstack((yp, y_pred)), X_day, exact=True)
 
-            self.Ts[tplus] = pd.DataFrame(pred_matrix,
-                                          index=list(X_station.index),
-                                          columns=list(X_station.columns))
-
+            self.Tj[tplus] = pd.Panel(pred_matrix,
+                                      items=list(X_day.items),
+                                      major_axis=list(X_day.major_axis),
+                                      minor_axis=list(X_day.minor_axis))
         else:
-            self.predict(X_station, X_test, d, s, tplus - 1)
-            self.predict(X_station, X_test, d, s, tplus)
+            self.predict(X_day, X_test, d, tplus - 1)
+            self.predict(X_day, X_test, d, tplus)
 
-        return self.Ts
+        return self.Tj
 
     @AR.X_decorator
     def forecast(self, datax, tplus=1):
@@ -106,32 +102,21 @@ class AR_sj(AR):
 
         """
         datax, self.X_test = datax
-
+        TT = dict()
         for d in tqdm(range(self.nb_days), ascii=True, desc='Predicting'):
             exist_ind = list(
                 set(ddict_days[d].values()) & set(datax.items))
+            X_day, X_test = self.decorate_X(datax[exist_ind])
+            self.predict(X_day, X_test, d, tplus)
+            TT[d] = deepcopy(list(self.Tj.values()))
+            self.Tj = dict()
 
-            for s in range(datax.shape[1]):
-                X_station, X_test = self.decorate_X(
-                    datax[exist_ind].iloc[:, s].T)
-                self.predict(X_station, X_test, d, s, tplus)
-                self.Tjs[d][s] = deepcopy(list(self.Ts.values()))
-                self.Ts = dict()
-
-        TT = {s: [] for s in range(datax.shape[1])}
-        for t in tqdm(range(tplus), ascii=True, desc='Creating Ts'):
-            for s in range(datax.shape[1]):
-                tmp_s = self.Tjs[0][s][t]
-                for d in range(1, self.nb_days):
-                    tmp_s = pd.concat([tmp_s, self.Tjs[d][s][t]])
-
-                TT[s].append(tmp_s.sort_index())
-
-        tmp = dict()
+        tmp = list()
         for t in tqdm(range(tplus), ascii=True, desc='Creating T'):
-            for s, i in zip(list(datax.major_axis), range(datax.shape[1])):
-                tmp[s] = TT[i][t]
+            for d in range(self.nb_days):
+                tmp.append(TT[d][t])
 
-            self.T[t] = pd.Panel(tmp).transpose(1, 0, 2)
+            self.T[t] = pd.concat(deepcopy(tmp)).sort_index()
+            tmp = list()
 
         return self.T

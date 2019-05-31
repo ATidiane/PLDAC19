@@ -11,4 +11,6 @@ from datetime import date
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-from tqdm.autonotebook import tqdm
+from tqdm.auto import tqdm
+
+# from tqdm.autonotebook import tqdm

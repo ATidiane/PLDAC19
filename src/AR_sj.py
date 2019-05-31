@@ -80,7 +80,7 @@ class AR_sj(AR):
                     yp,
                     X_station.iloc[:, t].values.reshape(-1, 1)))
 
-            y_pred = self.models[d][s].predict(X_test)
+            y_pred = self.models[d][s].predict(X_test).reshape(-1, 1)
 
             pred_matrix = self.reshaped(
                 np.vstack((yp, y_pred)), X_station, exact=True)
