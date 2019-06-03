@@ -6,7 +6,7 @@
 Author: Ahmed Tidiane BALDE
 """
 
-import numpy as np
+from __init__ import *
 
 
 class Regressor:
@@ -45,7 +45,7 @@ class Regressor:
                         X,
                         datax.iloc[:, t:t + self.p].values.reshape(-1, self.p)))
                     y = np.vstack(
-                        (y, datax.iloc[:, t + self.p].values.reshape(-1, 1)))
+                        (yb, datax.iloc[:, t + self.p].values.reshape(-1, 1)))
 
                 return fonc(self, (datax, X, y), *args, **kwargs)
             elif datax.ndim == 1:
@@ -86,6 +86,43 @@ class Regressor:
                         datax.iloc[:, t:t + self.p].values.reshape(-1, self.p)))
 
                 return fonc(self, (datax, X), *args, **kwargs)
+
+            elif datax.ndim == 1:
+                # TODO
+                pass
+            else:
+                raise ValueError("Untreated datax number of dimensions")
+
+        return reshape_data
+
+    def compute_residuals(fonc):
+        def reshape_data(self, datax, y_pred_train, *args, **kwargs):
+            if datax.ndim == 3:
+                residuals = y_pred_train - datax.iloc[:, :, self.p:].values
+
+                # Add zeros to the residuals and convert it into panel to match
+                # datax
+                zeros = np.zeros(
+                    (residuals.shape[0], residuals.shape[1], self.p))
+                residuals = np.concatenate((zeros, residuals), axis=2)
+                pd_residuals = pd.Panel(residuals,
+                                        items=list(datax.items),
+                                        major_axis=list(datax.major_axis),
+                                        minor_axis=list(datax.minor_axis))
+                return fonc(self, pd_residuals, y_pred_train, *args, **kwargs)
+
+            elif datax.ndim == 2:
+                residuals = y_pred_train - datax.iloc[:, self.p:].values
+
+                # Add zeros to the residuals and convert it into panel to match
+                # datax
+                zeros = np.zeros((residuals.shape[0], self.p))
+                residuals = np.concatenate((zeros, residuals), axis=1)
+                pd_residuals = pd.DataFrame(residuals,
+                                            index=list(datax.index),
+                                            columns=list(datax.columns))
+
+                return fonc(self, pd_residuals, y_pred_train, *args, **kwargs)
 
             elif datax.ndim == 1:
                 # TODO

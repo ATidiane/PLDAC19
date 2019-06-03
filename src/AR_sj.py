@@ -70,7 +70,13 @@ class AR_sj(AR):
 
         """
         if len(self.Ts) == tplus - 1:
-            for i, j in zip(range(1, tplus), reversed(range(1, tplus))):
+            if tplus > self.p + 1:
+                a = tplus - self.p
+                d = self.p + 1
+            else:
+                a, d = 1, tplus
+
+            for i, j in zip(range(a, tplus), reversed(range(1, d))):
                 _, tmp = self.decorate_X(self.Ts[i])
                 X_test[:, -j] = tmp[:, -j]
 
@@ -95,7 +101,6 @@ class AR_sj(AR):
 
         return self.Ts
 
-    @AR.X_decorator
     def forecast(self, datax, tplus=1):
         """FIXME! briefly describe function
 
@@ -105,7 +110,6 @@ class AR_sj(AR):
         :rtype:
 
         """
-        datax, self.X_test = datax
 
         for d in tqdm(range(self.nb_days), ascii=True, desc='Predicting'):
             exist_ind = list(
