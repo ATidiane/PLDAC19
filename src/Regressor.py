@@ -45,7 +45,7 @@ class Regressor:
                         X,
                         datax.iloc[:, t:t + self.p].values.reshape(-1, self.p)))
                     y = np.vstack(
-                        (yb, datax.iloc[:, t + self.p].values.reshape(-1, 1)))
+                        (y, datax.iloc[:, t + self.p].values.reshape(-1, 1)))
 
                 return fonc(self, (datax, X, y), *args, **kwargs)
             elif datax.ndim == 1:

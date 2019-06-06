@@ -86,7 +86,16 @@ def plot_qualitative_analysis(X_test, ar_preds, p=4):
     plt.show()
 
 
-def plot_specific(X_test, ar_preds, ar_preds_s, baseline_preds, p, j, s):
+def plot_specific(
+        X_test,
+        ar_preds,
+        ar_preds_s,
+        ar_per_t,
+        arma,
+        baseline_preds,
+        p,
+        j,
+        s):
     """FIXME! briefly describe function
 
     :param X_test:
@@ -101,16 +110,19 @@ def plot_specific(X_test, ar_preds, ar_preds_s, baseline_preds, p, j, s):
 
     """
     limit_t = len(ar_preds)
-    fig, ax = plt.subplots(limit_t, figsize=(16, limit_t * 5))
+    fig, ax = plt.subplots(limit_t, figsize=(16, limit_t * 3))
 
     for t in range(limit_t):
-        ar_preds[t].iloc[j, s].plot(ax=ax[t], label='General AR')
-        ar_preds_s[t].iloc[j, s].plot(ax=ax[t], label='AR By Station')
-        X_test.iloc[j, s].plot(ax=ax[t], label="Real values")
+        ar_preds[t].iloc[j, s].plot(ax=ax[t], label='AR : Linear Reg')
+        ar_preds_s[t].iloc[j, s].plot(ax=ax[t], label='AR : XGBoost')
+        ar_per_t[t].iloc[j, s].plot(ax=ax[t], label='AR per t: Linear Reg')
+        arma[t].iloc[j, s].plot(ax=ax[t], label='ARMA : Linear Reg')
+
+        X_test.iloc[j, s].plot(ax=ax[t], label="Real values", linewidth=3)
         baseline_preds[0].iloc[j, s].plot(
             ax=ax[t], style=['.--'], label='General Baseline')
-        baseline_preds[1].iloc[j, s].plot(
-            ax=ax[t], style=['.--'], label='Baseline per station')
+#        baseline_preds[1].iloc[j, s].plot(
+#            ax=ax[t], style=['.--'], label='Baseline per station')
         ax[t].set_ylabel('Number of Validations')
         ax[t].set_title(
             "AR models at t+{} with an order of {}".format(t + 1, p))
